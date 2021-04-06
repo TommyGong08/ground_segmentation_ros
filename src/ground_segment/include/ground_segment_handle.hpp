@@ -53,16 +53,7 @@ class GroundSegmentHandle {
   std::string raw_lidar_topic_name_;
   std::string no_ground_topic_name_;
   std::string ground_topic_name_;
-
-  int sensor_model_;
-  double sensor_height_;
-  int num_seg_;
-  int num_iter_;
-  int num_lpr_;
-  double th_seeds_;
-  double th_dist_;
-
-  int node_rate_;
+  int node_rate_ = 50;
 
   GroundSegment ground_segment_;
 

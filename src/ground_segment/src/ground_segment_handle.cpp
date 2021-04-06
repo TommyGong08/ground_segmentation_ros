@@ -33,7 +33,9 @@ GroundSegmentHandle::GroundSegmentHandle(ros::NodeHandle &nodeHandle) :
 }
 
 // Getters
+
 int GroundSegmentHandle::getNodeRate() const { return node_rate_; }
+
 
 // Methods
 void GroundSegmentHandle::loadParameters() {
@@ -47,30 +49,8 @@ void GroundSegmentHandle::loadParameters() {
   node_handle_.param<std::string>("ground_point_topic", ground_topic_name_, "/points_ground");
   ROS_INFO("Only Ground Output Point Cloud: %s", ground_topic_name_.c_str());
 
-  node_handle_.param("sensor_model", sensor_model_, 32);
-  ROS_INFO("Sensor Model: %d", sensor_model_);
-
-  node_handle_.param("sensor_height", sensor_height_, 2.5);
-  ROS_INFO("Sensor Height: %f", sensor_height_);
-
-  node_handle_.param("num_seg", num_seg_, 1);
-  ROS_INFO("Num of Segments: %d", num_seg_);
-
-  node_handle_.param("num_iter", num_iter_, 3);
-  ROS_INFO("Num of Iteration: %d", num_iter_);
-
-  node_handle_.param("num_lpr", num_lpr_, 20);
-  ROS_INFO("Num of LPR: %d", num_lpr_);
-
-  node_handle_.param("th_seeds", th_seeds_, 1.2);
-  ROS_INFO("Seeds Threshold: %f", th_seeds_);
-
-  node_handle_.param("th_dist", th_dist_, 0.3);
-  ROS_INFO("Distance Threshold: %f", th_dist_);
-
-   if (!node_handle_.param("node_rate", node_rate_, 50)) {
-  ROS_WARN_STREAM("Did not load node_rate. Standard value is: " << node_rate_);
-  }
+ node_handle_.param<int>("node_rate", node_rate_, 50);
+  ROS_INFO("Load node_rate. Standard value is: %d" ,node_rate_);
 
 }
 

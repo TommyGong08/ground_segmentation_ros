@@ -97,12 +97,6 @@ class GroundSegment {
   void runAlgorithm();
 
  private:
-    double sensor_height_;
-    int num_seg_;
-    int num_iter_;
-    int num_lpr_;
-    double th_seeds_;
-    double th_dist_;
 
     float d_;
     MatrixXf normal_;
@@ -111,6 +105,13 @@ class GroundSegment {
     ros::NodeHandle &nh_;
 
     void loadParameters();
+    int sensor_model_;
+     double sensor_height_;
+    int num_seg_;
+    int num_iter_;
+    int num_lpr_;
+    double th_seeds_;
+    double th_dist_;
 
     bool getRawLidar, is_ok_flag_;
     bool is_cone_reconstruct_;

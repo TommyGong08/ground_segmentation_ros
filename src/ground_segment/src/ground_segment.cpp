@@ -37,6 +37,13 @@ GroundSegment::GroundSegment(ros::NodeHandle &nh) : nh_(nh) { loadParameters(); 
 void GroundSegment::loadParameters() {
   getRawLidar = false;
   is_ok_flag_ = false;
+ sensor_model_ = 32;
+ sensor_height_ = 2.5;
+ num_seg_ = 1;
+ num_iter_ = 3;
+ num_lpr_ = 20;
+ th_seeds_ = 1.2 ;
+ th_dist_ = 0.3;
 }
 
 // Getters
@@ -51,6 +58,7 @@ bool GroundSegment::is_ok() { return is_ok_flag_; }
 
 // Setters
 void GroundSegment::setRawLidar(const sensor_msgs::PointCloud2 msg){
+  std::cout << "GET RAW POINT CLOUD\n " << std::endl; 
   raw_pc2_ = std::move(msg);
   getRawLidar = true;
 }
@@ -67,6 +75,7 @@ void GroundSegment::runAlgorithm() {
      getRawLidar = false;
 
 // 1.Msg to pointcloud
+    std::cout << "1111111111111111" << std::endl;
     pcl::fromROSMsg(raw_pc2_, laserCloudIn);
     pcl::fromROSMsg(raw_pc2_, laserCloudIn_org);
     // For mark ground points and hold all points
@@ -83,12 +92,14 @@ void GroundSegment::runAlgorithm() {
     //pcl::removeNaNFromPointCloud(laserCloudIn, laserCloudIn,indices);
 
     // 2.Sort on Z-axis value.
+    std::cout << "22222222222222" << std::endl;
     sort(laserCloudIn.points.begin(),laserCloudIn.end(),point_cmp);
 
     // 3.Error point removal
     // As there are some error mirror reflection under the ground, 
     // here regardless point under 2* sensor_height
     // Sort point according to height, here uses z-axis in default
+    std::cout << "33333333333333" << std::endl;
     pcl::PointCloud<VPoint>::iterator it = laserCloudIn.points.begin();
     for(int i=0;i<laserCloudIn.points.size();i++){
         if(laserCloudIn.points[i].z < -1.5 * sensor_height_){
@@ -100,10 +111,12 @@ void GroundSegment::runAlgorithm() {
     laserCloudIn.points.erase(laserCloudIn.points.begin(),it);
 
     // 4. Extract init ground seeds.
+    std::cout << "444444444444" << std::endl;
     extract_initial_seeds_(laserCloudIn);
     g_ground_pc = g_seeds_pc;
     
     // 5. Ground plane fitter mainloop
+    std::cout << "5555555555" << std::endl;
     for(int i=0;i<num_iter_;i++){
         estimate_plane_();
         g_ground_pc->clear();
