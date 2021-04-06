@@ -143,7 +143,7 @@ void GroundSegment::runAlgorithm() {
     }
 
      // publish ground points
-    pcl::toROSMsg(*g_ground_pc, ground_msg);
+    pcl::toROSMsg(*g_ground_pc, ground_msg);//
     ground_msg.header.stamp = raw_pc2_.header.stamp;
     ground_msg.header.frame_id = raw_pc2_.header.frame_id;
     // publish not ground points
