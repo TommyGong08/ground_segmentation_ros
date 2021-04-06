@@ -1,5 +1,0 @@
-<launch>
-    <node name="ground_segment_node" pkg="ground_segment" type="ground_segment" output="screen">
-        <rosparam command="load" file="$(find ground_segment)/config/ground_segment.yaml" /> <!--Load parameters from config files-->
-    </node>
-</launch>
