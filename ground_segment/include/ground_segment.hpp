@@ -48,6 +48,19 @@ using Eigen::MatrixXf;
 using Eigen::JacobiSVD;
 using Eigen::VectorXf;
 
+#define SLRPointXYZIRL scan_line_run::PointXYZIRL
+#define VPoint velodyne_pointcloud::PointXYZIR
+#define RUN pcl::PointCloud<SLRPointXYZIRL>
+
+bool point_cmp(VPoint a, VPoint b){
+    return a.z<b.z;
+}
+
+pcl::PointCloud<VPoint>::Ptr g_seeds_pc(new pcl::PointCloud<VPoint>());
+pcl::PointCloud<VPoint>::Ptr g_ground_pc(new pcl::PointCloud<VPoint>());
+pcl::PointCloud<VPoint>::Ptr g_not_ground_pc(new pcl::PointCloud<VPoint>());
+pcl::PointCloud<SLRPointXYZIRL>::Ptr g_all_pc(new pcl::PointCloud<SLRPointXYZIRL>());
+
 namespace ns_ground_segment {
 
 class GroundSegment {
@@ -58,10 +71,7 @@ class GroundSegment {
 
   // Getters
   sensor_msgs::PointCloud getLidarCluster();
-  sensor_msgs::PointCloud2 getFilterGround();
-  sensor_msgs::PointCloud2 getFilterCones();
-  sensor_msgs::PointCloud2 getFilterIntensity();
-  sensor_msgs::PointCloud2 getConeReconstruct();
+
   bool is_ok();
 
   // Setters
@@ -79,19 +89,27 @@ class GroundSegment {
 
     sensor_msgs::PointCloud cluster_;
 
-    sensor_msgs::PointCloud2 raw_pc2_;
-
-    pcl::PointCloud<pcl::PointXYZI> raw_pc_;
-
+    pcl::PointCloud<VPoint> laserCloudIn;
+    pcl::PointCloud<VPoint> laserCloudIn_org;
+    SLRPointXYZIRL point;
 
     void velodyne_callback_(const sensor_msgs::PointCloud2ConstPtr& laserCloudMsg);
     void estimate_plane_(void);
     void extract_initial_seeds_(const pcl::PointCloud<VPoint>& p_sorted);
     int name_index = 0;
 
+    // Model parameter for ground plane fitting
+    // The ground plane model is: ax+by+cz+d=0
+    // Here normal:=[a,b,c], d=d
+    // th_dist_d_ = threshold_dist - d 
     float d_;
     MatrixXf normal_;
     float th_dist_d_;
+
+    //publish
+    sensor_msgs::PointCloud2 ground_msg;
+    sensor_msgs::PointCloud2 groundless_msg;
+    sensor_msgs::PointCloud2 all_points_msg;
 };
 } // namespace ns_ground_segment
 

@@ -17,7 +17,7 @@
     along with FSD-Project.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "lidar_cluster.hpp"
+#include "ground_segment.hpp"
 #include <ros/ros.h>
 #include <sstream>
 #include <utility>
@@ -33,18 +33,17 @@ void LidarCluster::loadParameters() {
 }
 
 // Getters
-sensor_msgs::PointCloud GroundSegment::getGroundPoint() { return cluster_; }
-
+sensor_msgs::PointCloud GroundSegment::getGroundPoint() { return ground_msg; }
 
 sensor_msgs::PointCloud2 GroundSegment::getGroundlessPoint() {
-  return filter_ground_;
+  return groundless_msg;
 }
-sensor_msgs::PointCloud2 GroundSegment::getAllPoints() { return filter_cones_; }
+sensor_msgs::PointCloud2 GroundSegment::getAllPoints() { return all_points_msg; }
 
 bool GroundSegment::is_ok() { return is_ok_flag_; }
 
 // Setters
-void GroundSegment::setRawLidar(sensor_msgs::PointCloud2 msg){
+void GroundSegment::setRawLidar(const sensor_msgs::PointCloud2 msg){
   raw_pc2_ = std::move(msg);
   getRawLidar = true;
 }
@@ -54,11 +53,88 @@ void GroundSegment::runAlgorithm() {
       getRawLidar = false;
       return;
     }
+     getRawLidar = false;
 
+// 1.Msg to pointcloud
+    pcl::fromROSMsg(raw_pc2_, laserCloudIn);
+    pcl::fromROSMsg(raw_pc2_, laserCloudIn_org);
+    // For mark ground points and hold all points
+    for(size_t i=0;i<laserCloudIn.points.size();i++){
+        point.x = laserCloudIn.points[i].x;
+        point.y = laserCloudIn.points[i].y;
+        point.z = laserCloudIn.points[i].z;
+        point.intensity = laserCloudIn.points[i].intensity;
+        point.ring = laserCloudIn.points[i].ring;
+        point.label = 0u;// 0 means uncluster
+        g_all_pc->points.push_back(point);
+    }
+    //std::vector<int> indices;
+    //pcl::removeNaNFromPointCloud(laserCloudIn, laserCloudIn,indices);
 
+    // 2.Sort on Z-axis value.
+    sort(laserCloudIn.points.begin(),laserCloudIn.end(),point_cmp);
 
+    // 3.Error point removal
+    // As there are some error mirror reflection under the ground, 
+    // here regardless point under 2* sensor_height
+    // Sort point according to height, here uses z-axis in default
+    pcl::PointCloud<VPoint>::iterator it = laserCloudIn.points.begin();
+    for(int i=0;i<laserCloudIn.points.size();i++){
+        if(laserCloudIn.points[i].z < -1.5*sensor_height_){
+            it++;
+        }else{
+            break;
+        }
+    }
+    laserCloudIn.points.erase(laserCloudIn.points.begin(),it);
 
+    // 4. Extract init ground seeds.
+    extract_initial_seeds_(laserCloudIn);
+    g_ground_pc = g_seeds_pc;
+    
+    // 5. Ground plane fitter mainloop
+    for(int i=0;i<num_iter_;i++){
+        estimate_plane_();
+        g_ground_pc->clear();
+        g_not_ground_pc->clear();
 
+        //pointcloud to matrix
+        MatrixXf points(laserCloudIn_org.points.size(),3);
+        int j =0;
+        for(auto p:laserCloudIn_org.points){
+            points.row(j++)<<p.x,p.y,p.z;
+        }
+        // ground plane model
+        VectorXf result = points*normal_;
+        // threshold filter
+        for(int r=0;r<result.rows();r++){
+            if(result[r]<th_dist_d_){
+                g_all_pc->points[r].label = 1u;// means ground
+                g_ground_pc->points.push_back(laserCloudIn_org[r]);
+            }else{
+                g_all_pc->points[r].label = 0u;// means not ground and non clusterred
+                g_not_ground_pc->points.push_back(laserCloudIn_org[r]);
+            }
+        }
+    }
+
+     // publish ground points
+    ground_msg.header.stamp = in_cloud_msg->header.stamp;
+    ground_msg.header.frame_id = in_cloud_msg->header.frame_id;
+    ground_points_pub_.publish(ground_msg);
+    // publish not ground points
+    pcl::toROSMsg(*g_not_ground_pc, groundless_msg);
+    groundless_msg.header.stamp = in_cloud_msg->header.stamp;
+    groundless_msg.header.frame_id = in_cloud_msg->header.frame_id;
+    groundless_points_pub_.publish(groundless_msg);
+    // publish all points
+    pcl::toROSMsg(*g_all_pc, all_points_msg);
+    all_points_msg.header.stamp = in_cloud_msg->header.stamp;
+    all_points_msg.header.frame_id = in_cloud_msg->header.frame_id;
+    all_points_pub_.publish(all_points_msg);
+    g_all_pc->clear();
+
+    is_ok_flag_ = true;
 }
 
 void GroundPlaneFit::estimate_plane_(void){

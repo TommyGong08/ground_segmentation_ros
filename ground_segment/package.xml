@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>lidar_cluster</name>
+  <name>ground_segment</name>
   <version>0.0.0</version>
-  <description>Simple lidar_cluster node, that inputs "cone detections" and outputs array of points</description>
-  <maintainer email="killasipilin@gmail.com">chentairan</maintainer>
+  <description>Simple ground_segment node, that inputs "cone detections" and outputs array of points</description>
+  <maintainer email="GongHailong2020@126.com">gonghailong</maintainer>
   <license>TODO</license>
 
 
