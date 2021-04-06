@@ -1,0 +1,16 @@
+raw_lidar_topic_name: /pandar_points
+
+lidar_cluster_topic_name: /lidar_cluster
+
+filter_ground_topic_name: /perception/filter_ground
+filter_cones_topic_name: /perception/filter_cones
+filter_intensity_topic_name: /perception/filter_intensity
+cone_reconstruct_topic_name: /perception/cone_reconstruct
+
+Rotation: [0.9999575308, -0.0000947069, -0.0092156168, 
+-0.0000000000, 0.9999471980, -0.0102762451, 
+0.0092161034, 0.0102758086, 0.9999047311]
+
+Translate: [-0.0000000000, 0.0000000000, 0.2333756831]
+
+node_rate: 20   # [Herz]
